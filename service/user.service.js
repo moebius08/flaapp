@@ -15,8 +15,16 @@ module.exports = {
                 return callback(null, results);
             }
         );
-
-
+    },
+    checkEmail: (email, callback) => {
+        db.query(
+            'SELECT * FROM user WHERE email = ?', [email],
+            (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            })
     },
     getAllUser: (callback) => {
         db.query(
