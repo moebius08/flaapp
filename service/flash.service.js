@@ -81,23 +81,36 @@ module.exports = {
             return callback(null, results);
         });
     },
-    getProgressCount: (level_id, callback) => {
+    getProgressCount: (data, callback) => {
         // SQL statement to get the progress count and total lesson count
         const sql = `
             SELECT 
                 ul.progress AS progress_count,
-                COUNT(l.id) AS total_lesson_count
+                (SELECT COUNT(*) FROM lesson WHERE level_id = ?) AS total_lesson_count
             FROM 
                 user_level ul
-            LEFT JOIN 
-                lesson l ON l.level_id = ul.level_id
             WHERE 
-                ul.level_id = ?
-            GROUP BY 
-                ul.level_id
+                ul.level_id = ? AND ul.user_id = ?
         `;
         // Execute the SQL statement
-        db.query(sql, [level_id], (error, results, fields) => {
+        db.query(sql, [data.level_id, data.level_id, data.user_id], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, results);
+        });
+    },
+
+    incrementProgress: (data, callback) => {
+        const sql = `
+            UPDATE user_level 
+            SET progress = progress + 1 
+            WHERE user_id = ? AND level_id = ?
+        `;
+
+        // Execute the SQL statement
+        db.query(sql, [data.user_id, data.level_id], (error, results, fields) => {
             if (error) {
                 console.log(error);
                 return callback(error);
@@ -105,5 +118,4 @@ module.exports = {
             return callback(null, results);
         });
     }
-
 }
