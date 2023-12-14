@@ -85,5 +85,15 @@ module.exports = {
                 return callback(null, results[0]);
             }
         )
+    },
+    insertFirstLevel: (user_id, callback) => {
+        db.query(
+            `INSERT INTO user_level (user_id, level_id, unlocked, progress) VALUES (?, 1,1,0)`, [user_id], (error, results, fields) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results);
+            }
+        )
     }
 }

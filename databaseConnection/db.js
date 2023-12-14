@@ -7,7 +7,7 @@ db.connect((error) => {
     if (error) {
         console.log(error);
     } else {
-        console.log("Connected Successfuly")
+        console.log("DB Connected Successfuly")
     }
 })
 

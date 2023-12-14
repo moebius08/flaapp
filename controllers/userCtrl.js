@@ -5,7 +5,8 @@ const {
     updateUserbyId,
     deleteUserbyId,
     getUserByUserEmail,
-    checkEmail
+    checkEmail,
+    insertFirstLevel
 } = require('../service/user.service');
 const { genSaltSync, hashSync, compareSync } = require('bcrypt')
 const { sign } = require('jsonwebtoken');
@@ -17,9 +18,17 @@ module.exports = {
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
         if (body.password.length >= 6) {
-            checkEmail(body.email, (err, result) => {
-                if (!result) {
-                    create(body, (err, result) => {
+            checkEmail(body.email, (err, results) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                } else if (results.length > 0) { // Check if results array is not empty
+                    return res.json({
+                        success: 0,
+                        message: "Email already in use"
+                    });
+                } else {
+                    create(body, (err, results) => {
                         if (err) {
                             console.log(err);
                             return res.status(500).json({
@@ -27,23 +36,27 @@ module.exports = {
                                 message: "Database connection Error"
                             });
                         }
-                        return res.status(200).json({
-                            success: 1,
-                            data: result
-                        })
+                        insertFirstLevel(results.insertId, (err, results) => {
+                            if (err) {
+                                console.log(err);
+                                return res.status(500).json({
+                                    success: 0,
+                                    message: "Database connection Error"
+                                });
+                            }
+                            return res.status(200).json({
+                                success: 1,
+                                data: results
+                            });
+                        });
                     });
-                } else {
-                    return res.status(401).json({
-                        success: 0,
-                        message: "Email already in use"
-                    })
                 }
-            })
+            });
         } else {
             return res.status(401).json({
                 success: 0,
                 message: "Password must be greater than or equal to 6"
-            })
+            });
         }
     },
 
@@ -140,7 +153,6 @@ module.exports = {
                 return res.status(401).json({
                     success: 0,
                     message: "Invalid Email or Password",
-
                 })
             }
         });
