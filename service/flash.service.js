@@ -68,9 +68,13 @@ module.exports = {
     getNextLevelId: (user_id, callback) => {
         // SQL statement to get the next level ID for a user
         const sql = `
-            SELECT IFNULL(MAX(ul.level_id), 0) + 1 AS next_level_id
-            FROM user_level ul
-            WHERE ul.user_id = ?
+            SELECT MIN(l.id) AS next_level_id
+            FROM level l
+            WHERE l.id > (
+                SELECT IFNULL(MAX(ul.level_id), 0)
+                FROM user_level ul
+                WHERE ul.user_id = ?
+            )
         `;
         // Execute the SQL statement
         db.query(sql, [user_id], (error, results, fields) => {
