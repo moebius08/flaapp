@@ -3,7 +3,9 @@ const {
     getNextLevelId,
     getProgressCount,
     addLevelUserProgress,
-    incrementProgress
+    incrementProgress,
+    completedLessonByLevelId,
+    lockedLessonByLevelId
 } = require("../service/flash.service");
 
 
@@ -130,5 +132,53 @@ module.exports = {
                 })
             }
         })
-    }
+    },
+
+    getAllLessons: (req, res) => {
+        const user_id = req.user.id;
+        const body = req.body
+
+        try {
+            if (!body.level_id) {
+                return res.status(407).json({
+                    success: 0,
+                    message: 'Invalid level ID'
+                })
+            } else {
+                data = {
+                    user_id: user_id,
+                    level_id: body.level_id
+                }
+                completedLessonByLevelId(data, (err, userLevel) => {
+                    if (err) {
+                        return res.status(500).json({
+                            success: 0,
+                            message: "DB FAILED"
+                        })
+                    } else {
+                        lockedLessonByLevelId(data, (err, lessons) => {
+                            if (err) {
+                                return res.status(500).json({
+                                    success: 0,
+                                    message: "DB FAILED"
+                                })
+                            } else {
+                                return res.status(200).json({
+                                    success: 1,
+                                    completed: userLevel,
+                                    unlock: lessons[0],
+                                    locked: lessons
+                                })
+                            }
+                        })
+
+
+                    }
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    },
+
 }

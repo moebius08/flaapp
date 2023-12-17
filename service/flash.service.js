@@ -121,5 +121,41 @@ module.exports = {
             }
             return callback(null, results);
         });
-    }
+    },
+
+    completedLessonByLevelId: (data, callback) => {
+        const sql = `SELECT lesson.* 
+                        FROM lesson 
+                        JOIN user_lesson 
+                        ON lesson.id = user_lesson.lesson_id 
+                        WHERE user_lesson.user_id = ? 
+                        AND lesson.level_id = ?;
+        `;
+        db.query(sql, [data.user_id, data.level_id], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, results);
+        })
+    },
+    lockedLessonByLevelId: (data, callback) => {
+        const sql = `SELECT lesson.*
+        FROM lesson
+        WHERE NOT EXISTS (
+        SELECT 1
+        FROM user_lesson
+        WHERE user_lesson.user_id = ?
+        AND user_lesson.lesson_id = lesson.id
+        )
+        AND lesson.level_id = ?
+        `
+        db.query(sql, [data.user_id, data.level_id], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, results);
+        })
+    },
 }
