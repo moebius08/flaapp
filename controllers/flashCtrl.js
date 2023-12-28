@@ -5,7 +5,8 @@ const {
     addLevelUserProgress,
     incrementProgress,
     completedLessonByLevelId,
-    lockedLessonByLevelId
+    lockedLessonByLevelId,
+    lessonComplete
 } = require("../service/flash.service");
 
 
@@ -104,36 +105,6 @@ module.exports = {
             }
         })
     },
-
-    increment: (req, res) => {
-        const user_id = req.user.id;
-        const body = req.body
-        console.log(user_id)
-        data = {
-            user_id: user_id,
-            level_id: body.level_id
-        }
-        incrementProgress(data, (err, result) => {
-            if (err) {
-                return res.json({
-                    success: 0,
-                    message: "DB FAILED"
-                })
-
-            } else if (!result) {
-                return res.json({
-                    success: 0,
-                    message: "Something went wrong again"
-                })
-            } else {
-                return res.status(200).json({
-                    success: 1,
-                    message: "Progress up by 1"
-                })
-            }
-        })
-    },
-
     getAllLessons: (req, res) => {
         const user_id = req.user.id;
         const body = req.body
@@ -163,22 +134,93 @@ module.exports = {
                                     message: "DB FAILED"
                                 })
                             } else {
+                                let formattedLessons = [];
+                                userLevel.forEach(lesson => {
+                                    formattedLessons.push({
+                                        id: lesson.id,
+                                        level_id: lesson.level_id,
+                                        lesson: lesson.lesson,
+                                        status: "completed"
+                                    });
+                                });
+                                lessons.forEach((lesson, index) => {
+                                    formattedLessons.push({
+                                        id: lesson.id,
+                                        level_id: lesson.level_id,
+                                        lesson: lesson.lesson,
+                                        status: index === 0 ? "unlocked" : "locked"
+                                    });
+                                });
                                 return res.status(200).json({
                                     success: 1,
-                                    completed: userLevel,
-                                    unlock: lessons[0],
-                                    locked: lessons
+                                    data: formattedLessons
                                 })
                             }
                         })
-
-
                     }
                 })
             }
         } catch (error) {
-            console.log(error)
+            res.status(500).json({
+                success: 0,
+                error: error
+            })
         }
     },
 
+    completeLesson: (req, res) => {
+        try {
+            const user_id = req.user.id;
+            const body = req.body
+            data = {
+                user_id: user_id,
+                level_id: body.level_id,
+                lesson_id: body.lesson_id
+            }
+            completedLessonByLevelId(data, (err, completedLessons) => {
+                if (err) {
+                    return res.json({
+                        success: 0,
+                        message: "DB FAILED"
+                    })
+                } else {
+                    const isCompleted = completedLessons.some(lesson => lesson.id === data.lesson_id);
+                    if (isCompleted) {
+                        return res.status(200).json({
+                            success: 1,
+                            message: 'Lesson already completed'
+                        })
+                    } else {
+                        lessonComplete(data, (err, result) => {
+                            if (err) {
+                                return res.json({
+                                    success: 0,
+                                    message: "DB FAILED"
+                                })
+                            } else {
+                                incrementProgress(data, (err, result) => {
+                                    if (err) {
+                                        return res.json({
+                                            success: 0,
+                                            message: "DB FAILED"
+                                        })
+                                    }
+                                })
+                                return res.status(200).json({
+                                    success: 1,
+                                    message: 'Lesson Completed Congratulations'
+                                })
+                            }
+                        })
+                    }
+                }
+            })
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({
+                success: 0,
+                error: error
+            })
+        }
+    }
 }

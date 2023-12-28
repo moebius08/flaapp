@@ -108,8 +108,8 @@ module.exports = {
 
     incrementProgress: (data, callback) => {
         const sql = `
-            UPDATE user_level 
-            SET progress = progress + 1 
+            UPDATE user_level
+            SET progress = progress + 1
             WHERE user_id = ? AND level_id = ?
         `;
 
@@ -158,4 +158,15 @@ module.exports = {
             return callback(null, results);
         })
     },
+    lessonComplete: (data, callback) => {
+        const sql = `INSERT INTO user_lesson (user_id, lesson_id, completed) VALUES (?, ?, 1)`;
+
+        db.query(sql, [data.user_id, data.lesson_id], (error, result, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, result);
+        })
+    }
 }
