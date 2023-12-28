@@ -107,10 +107,10 @@ module.exports = {
     },
     getAllLessons: (req, res) => {
         const user_id = req.user.id;
-        const body = req.body
+        const level_id = req.query.level_id;
 
         try {
-            if (!body.level_id) {
+            if (!level_id) {
                 return res.status(407).json({
                     success: 0,
                     message: 'Invalid level ID'
@@ -118,7 +118,7 @@ module.exports = {
             } else {
                 data = {
                     user_id: user_id,
-                    level_id: body.level_id
+                    level_id,
                 }
                 completedLessonByLevelId(data, (err, userLevel) => {
                     if (err) {
