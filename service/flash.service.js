@@ -168,5 +168,42 @@ module.exports = {
             }
             return callback(null, result);
         })
+    },
+
+    getUncompletedFlashcard: (data, callback) => {
+        const sql = `
+            SELECT f.id, f.en, f.de, f.es, f.ph
+            FROM lessonflashcard lf
+            JOIN flash_card f ON lf.flash_id = f.id
+            LEFT JOIN user_flashcard uf ON uf.flash_id = f.id AND uf.user_id = ?
+            WHERE lf.lesson_id = ? AND (uf.box IS NULL OR uf.box != 1)
+        `;
+
+        db.query(sql, [data.user_id, data.lesson_id], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, results);
+        })
+    },
+
+    getCompletedFlashCard: (data, callback) => {
+        const sql = `
+            SELECT f.id, f.en, f.de, f.es, f.ph
+            FROM lessonflashcard lf
+            JOIN flash_card f ON lf.flash_id = f.id
+            JOIN user_flashcard uf ON uf.flash_id = f.id AND uf.user_id = ?
+            WHERE lf.lesson_id = ? AND uf.box = 1
+        `;
+
+        db.query(sql, [data.user_id, data.lesson_id], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, results);
+        })
     }
+
 }

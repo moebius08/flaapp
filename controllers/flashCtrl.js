@@ -6,7 +6,9 @@ const {
     incrementProgress,
     completedLessonByLevelId,
     lockedLessonByLevelId,
-    lessonComplete
+    lessonComplete,
+    getCompletedFlashCard,
+    getUncompletedFlashcard
 } = require("../service/flash.service");
 
 
@@ -222,5 +224,57 @@ module.exports = {
                 error: error
             })
         }
-    }
+    },
+    getFlashcard: (req, res) => {
+        try {
+            const user_id = req.user.id;
+            const body = req.body;
+            const data = {
+                user_id: user_id,
+                level_id: body.level_id,
+                lesson_id: req.params.lesson_id ? req.params.lesson_id : body.lesson_id
+            };
+
+
+
+            getUncompletedFlashcard(data, (err, uncompleted) => {
+                if (err) {
+                    return res.json({
+                        success: 0,
+                        message: err.message,
+                    });
+                } else {
+                    getCompletedFlashCard(data, (err, completed) => {
+                        if (err) {
+                            return res.json({
+                                success: 0,
+                                message: err.message
+                            });
+                        } else {
+                            return res.status(200).json({
+                                success: 1,
+                                data: {
+                                    lesson_id: data.lesson_id,
+                                    boxes: [{
+                                            length: uncompleted.length,
+                                            flashcards: uncompleted
+                                        },
+                                        {
+                                            length: completed.length,
+                                            flashcards: completed
+                                        }
+                                    ]
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: 0,
+                error: error
+            });
+        }
+    },
 }
