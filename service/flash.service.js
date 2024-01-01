@@ -204,6 +204,19 @@ module.exports = {
             }
             return callback(null, results);
         })
+    },
+
+    insertFlashBox: (data, callback) => {
+        const sql = `
+        INSERT INTO user_flashcard (user_id,flash_id,lesson_id, box) values (?,?,?,1)`
+
+        db.query(sql, [data.user_id, data.flash_id, data.lesson_id], (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            return callback(null, results);
+        })
     }
 
 }

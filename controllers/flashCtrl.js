@@ -8,7 +8,8 @@ const {
     lockedLessonByLevelId,
     lessonComplete,
     getCompletedFlashCard,
-    getUncompletedFlashcard
+    getUncompletedFlashcard,
+    insertFlashBox
 } = require("../service/flash.service");
 
 
@@ -225,56 +226,91 @@ module.exports = {
             })
         }
     },
+
     getFlashcard: (req, res) => {
         try {
             const user_id = req.user.id;
             const body = req.body;
-            const data = {
+            let data = {
                 user_id: user_id,
                 level_id: body.level_id,
-                lesson_id: req.params.lesson_id ? req.params.lesson_id : body.lesson_id
+                lesson_id: body.lesson_id,
+                swipeCard: body.swipeCard,
+                flash_id: body.flash_id
             };
 
-
-
-            getUncompletedFlashcard(data, (err, uncompleted) => {
-                if (err) {
-                    return res.json({
-                        success: 0,
-                        message: err.message,
-                    });
-                } else {
-                    getCompletedFlashCard(data, (err, completed) => {
-                        if (err) {
-                            return res.json({
-                                success: 0,
-                                message: err.message
-                            });
-                        } else {
-                            return res.status(200).json({
-                                success: 1,
-                                data: {
-                                    lesson_id: data.lesson_id,
-                                    boxes: [{
-                                            length: uncompleted.length,
-                                            flashcards: uncompleted
-                                        },
-                                        {
-                                            length: completed.length,
-                                            flashcards: completed
-                                        }
-                                    ]
+            if (body.swipeCard === true || req.params.swipeCard === true) {
+                getCompletedFlashCard(data, (err, completed) => {
+                    if (err) {
+                        return res.json({
+                            success: 0,
+                            message: err.message,
+                        });
+                    } else {
+                        console.log(completed);
+                        const isCompleted = completed.some(flashcard => flashcard['id'] === body.flash_id);
+                        console.log(isCompleted);
+                        if (!isCompleted) {
+                            insertFlashBox(data, (err, completed) => {
+                                if (err) {
+                                    return res.json({
+                                        success: 0,
+                                        message: err.message
+                                    })
+                                } else {
+                                    fetchFlashcards(data, res);
                                 }
-                            });
+                            })
+                        } else {
+                            fetchFlashcards(data, res);
                         }
-                    });
-                }
-            });
+                    }
+                })
+            } else {
+                fetchFlashcards(data, res);
+            }
+
         } catch (error) {
             res.status(500).json({
                 success: 0,
                 error: error
             });
         }
-    },
+    }
+}
+
+function fetchFlashcards(data, res) {
+    getUncompletedFlashcard(data, (err, uncompleted) => {
+        if (err) {
+            return res.json({
+                success: 0,
+                message: err.message,
+            });
+        } else {
+            getCompletedFlashCard(data, (err, completed) => {
+                if (err) {
+                    return res.json({
+                        success: 0,
+                        message: err.message
+                    });
+                } else {
+                    return res.status(200).json({
+                        success: 1,
+                        data: {
+                            lesson_id: data.lesson_id,
+                            boxes: [{
+                                    length: uncompleted.length,
+                                    flashcards: uncompleted
+                                },
+                                {
+                                    length: completed.length,
+                                    flashcards: completed
+                                }
+                            ]
+                        }
+                    });
+                }
+            });
+        }
+    });
 }

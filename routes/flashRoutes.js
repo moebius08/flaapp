@@ -14,7 +14,7 @@ router.post('/lesson-complete', checkToken, completeLesson) // lesson id and lev
 
 //Show lessons chuchu box
 
-router.get('/flash-card/:lesson_id', checkToken, getFlashcard) //
+router.post('/flash-card/', checkToken, getFlashcard) //
 
 
 
